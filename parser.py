@@ -20,10 +20,6 @@ Notop           ->      not .
 """
 
 
-
-
-
-
 import plex
 
 class ParseError(Exception): 
@@ -42,8 +38,8 @@ class MyParser:
         
         space = plex.Rep1(plex.Any(' \n\t'))
         digit = plex.Range('09')
-        true =  plex.Str('1') + plex.NoCase(plex.Str('TRUE')+plex.Str("T"))
-        false = plex.Str('0') + plex.NoCase(plex.Str('FALSE')+plex.Str("F"))
+        true =  plex.NoCase(plex.Str('TRUE','t','1'))
+        false = plex.NoCase(plex.Str('FALSE','f','0'))
         andop = plex.Str("and")
         orop  = plex.Str("or")
         notop = plex.Str("not")
@@ -55,12 +51,12 @@ class MyParser:
 
         lexicon = plex.Lexicon([
             (keyword,plex.TEXT),
-            (name,'IDENTIFIR'),
             (orop,'OR'),
             (andop,'AND'),
             (notop,'NOT'),
             (true,'TRUE'),
             (false,'FALSE'),
+            (name,'IDENTIFIR'),
             (space,plex.IGNORE),
             (opereitor,plex.TEXT),
             (single_coment,plex.IGNORE)
@@ -71,6 +67,7 @@ class MyParser:
         self.la,self.val = self.next_token()
         
     def stmtList(self):
+        print('Stmt_list :', self.la )
         if self.la == 'IDENTIFIR' or self.la == 'print':
             self.stmt()
             self.stmtList()
@@ -80,6 +77,7 @@ class MyParser:
             raise ParseError("Perimeno IDENTIFIR || print")
     
     def stmt(self):
+        print('Stmt :',self.la)
         if self.la == 'IDENTIFIR':
             self.match('IDENTIFIR')
             self.match('=')
@@ -91,52 +89,55 @@ class MyParser:
             raise ParseError("PERIMENO IDENTIFIR || =")
     
     def expr(self):
-        if self.la == 'OR':
+        print('Expr :',self.la)
+        if  self.la == '(' or self.la == 'IDENTIFIR' or self.la == 'TRUE' or self.la == 'FALSE' or self.la == 'NOT'  :
             self.ATerm()
             self.ATermTail()
-        elif self.la in ('IDENTIFIER','print',None,')'):
+        elif self.la in ('IDENTIFIR','print',')'):
             return
         else:
             raise ParseError("PERIMENO ( || IDENTIFIR || TRUE || FALSE <++>")
     
     def ATermTail(self):
+        print('ATermTail :',self.la)
         if self.la == 'OR':
             self.ATerm()
             self.ATermTail()
-        elif self.la in ('or','IDENTIFIER','print',None,')'):
+        elif self.la in ('IDENTIFIR','print',None,')'):
             return
         else:
             raise ParseError("PERIMENO OR")
     
     def ATerm(self):
-        if self.la == '(':
+        print('ATerm :',self.la)
+        if self.la == '(' or self.la == 'IDENTIFIR' or self.la == 'TRUE' or self.la == 'FALSE' or self.la == 'NOT':
             self.BTerm()
             self.BTermTail()
-        elif self.la in ('or','IDENTIFIER','print',None,')'):
+        elif self.la in ('OR','IDENTIFIR','print',')'):
             return
         else:
             raise ParseError("PERIMENO ( || IDENTIFIR || TRUE || FALSE")
     
     
     def BTermTail(self):
-        if self.match == 'and':
+        print('BTermTail :',self.la)
+        if self.la == 'AND':
             self.andop()
             self.BTerm()
             self.BTermTail()    
-        elif self.la in ('and','or','IDENTIFIER','print',None,')'):
+        elif self.la in ('OR','IDENTIFIR','print',None,')'):
             return
         else:
             raise ParseError("PERIMENO AND")
     
     
     def BTerm(self):
-        if self.la == 'not':
+        print('BTerm :',self.la)
+        if self.la == 'NOT':
             self.notop()
             self.factor()
-        elif self.la == '(':
+        elif self.la == '(' or self.la == 'IDENTIFIR' or self.la == 'TRUE' or self.la == 'FALSE':
             self.factor()
-        elif self.la in ('and','or','IDENTIFIR','print',None,')'):
-            return
         else:
             raise ParseError("PERIMENO  not")
             
@@ -144,6 +145,7 @@ class MyParser:
   
     
     def factor(self):
+        print('Factor :',self.la)
         if self.la == '(':
             self.match('(')
             self.expr()
@@ -154,31 +156,35 @@ class MyParser:
             self.match('TRUE')
         elif self.la == 'FALSE':
             self.match('FALSE')
-        elif self.la in ('not','and','or',None,')','print'):
-			return
+        elif self.la in ('NOT','AND','OR',')','print'):
+            return
         else:
             raise ParseError('Perimeno ( || IDENTIFIR || TRUE || FALSE ')
     
     def orop(self):
-        if self.la == 'or':
-            self.match('or')
+        print('Orop :',self.la)
+        if self.la == 'OR':
+            self.match('OR')
         else:
             raise ParseError("PERIMENO or")
     
     def andop(self):
-        if self.la == 'and':
-            self.match('and')
+        print('AndOp :',self.la)
+        if self.la == 'AND':
+            self.match('AND')
         else:
             raise ParseError("PERIMENO and ")
     
     def notop(self):
-        if self.la == 'not':
-            self.match('not')
+        print('NotOp :',self.la)
+        if self.la == 'NOT':
+            self.match('NOT')
         else:
             raise ParseError("PERIMENO  not ")
     
     def match(self,token):
         if self.la == token:
+            #print('Match', self.la,' ' ,self.val)
             self.la,self.val = self.next_token()
         else:
             raise ParseError(self.la,token)
