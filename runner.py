@@ -9,7 +9,7 @@ ATerm_tail       ->      OrOp ATerm ATerm_tail | .
 ATerm            ->      BTerm BTerm_tail.
 BTerm_tail      ->      AndOp BTerm BTerm_tail |.
 BTerm           ->      Factor  | Notop Factor .
-Factor          ->      (Expr) | id |number | .    
+Factor          ->      (Expr) | id |number  .    
 OrOp            ->      or  .
 AndOp           ->      and .
 Notop           ->      not .
